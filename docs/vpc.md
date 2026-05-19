@@ -261,4 +261,4 @@ SECURITY_GROUP_NAME="gh-security-group"
     | Puerto 22 | Acceso SSH |
     | Puerto 3000 | Aplicación web |
 
-### [Regresar](./../README.md#configuracion-de-iam)
+### [Regresar](./../README.md#guía-de-configuración)

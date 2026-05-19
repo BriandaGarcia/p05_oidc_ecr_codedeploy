@@ -1,6 +1,6 @@
 # Taller de DevOps con un Monorepositorio - AWS
 
-Este repositorio tiene como proposito mostrar el despliegue de una aplicación *FullStack* en la nube de AWS mediante flujos de CI/CD con GitHub Actions, construyendo la imágen del *Backend* y *Frontend* en un repositorio de AWS Container Registry y el despliegue con Code Deploy y S3 en una instancia de EC2 utilizando el protocolo OIDC para la *Autenticación* y *Autorización* con AWS y GitHub.
+Este repositorio tiene como propósito mostrar el despliegue de una aplicación *FullStack* en la nube de AWS mediante flujos de CI/CD con GitHub Actions, construyendo la imagen del *Backend* y *Frontend* en un repositorio de AWS Container Registry y el despliegue con Code Deploy y S3 en una instancia de EC2 utilizando el protocolo OIDC para la *Autenticación* y *Autorización* con AWS y GitHub.
 
 ## Arquitectura y flujo de construcción
 
@@ -150,3 +150,7 @@ Se activa cuando creas un tag con formato `v1.0.0`, `v2.3.1`, etc. Toma las imá
 6. **Configuración de una aplicación con Code Deploy**
 
     * [Guía para configurar una aplicación con Code Deploy](./docs/codedeploy.md)
+
+7. **Eliminación de recursos**
+
+    * [Guía para eliminar todos los recursos creados](./docs/cleanup.md)

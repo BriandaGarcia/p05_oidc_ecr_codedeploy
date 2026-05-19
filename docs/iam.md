@@ -101,11 +101,11 @@ La política será utilizada posteriormente por un rol IAM para permitir que Git
 
 ### Repetir los pasos con las siguientes dos políticas
 
-**CodeDeploy-GitHubActions-Policy**
+**ECR-GitHubActions-Policy**
 
 1. Crea un archivo llamado *ecr-github-actions-policy.json* con el siguiente comando:
     ```bash
-    cat <<EOF > codedeploy-github-actions-policy.json
+    cat <<EOF > ecr-github-actions-policy.json
     {
         "Version": "2012-10-17",
         "Statement": [
@@ -132,6 +132,7 @@ La política será utilizada posteriormente por un rol IAM para permitir que Git
             }
         ]
     }
+    EOF
     ```
 
 2. Ejecuta el siguiente comando:
@@ -153,7 +154,7 @@ La política será utilizada posteriormente por un rol IAM para permitir que Git
 
 1. Crea un archivo llamado *s3-github-actions-policy.json* con el siguiente comando:
     ```bash
-    cat <<EOF > codedeploy-github-actions-policy.json
+    cat <<EOF > s3-github-actions-policy.json
     {
         "Version": "2012-10-17",
         "Statement": [
@@ -169,6 +170,7 @@ La política será utilizada posteriormente por un rol IAM para permitir que Git
             }
         ]
     }
+    EOF
     ```
 
 2. Ejecuta el siguiente comando:
@@ -186,7 +188,7 @@ La política será utilizada posteriormente por un rol IAM para permitir que Git
         --scope Local
     ```
 
-## Paso 3 - Crear el rol IAM que GitHub Actions va a asumir
+### Paso 3 - Crear el rol IAM que GitHub Actions va a asumir
 
 Este rol define qué puede hacer GitHub Actions dentro de tu cuenta AWS.
 
@@ -362,25 +364,17 @@ El rol será utilizado por la instancia EC2 para:
 
     ```bash
     aws iam create-role \
-        --role-name EC2-APP-Role \
+        --role-name EC2-CodeDeploy-Role \
         --assume-role-policy-document file://ec2-trust-policy.json
     ```
 
 3. Asociar políticas al rol
 
-    - **AmazonEC2ContainerRegistryPullOnly**
-
-        ```bash
-        aws iam attach-role-policy \
-            --role-name EC2-APP-Role \
-            --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly
-        ```
-
     - **AmazonEC2ContainerRegistryReadOnly**
 
         ```bash
         aws iam attach-role-policy \
-            --role-name EC2-APP-Role \
+            --role-name EC2-CodeDeploy-Role \
             --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         ```
 
@@ -388,23 +382,23 @@ El rol será utilizado por la instancia EC2 para:
 
         ```bash
         aws iam attach-role-policy \
-            --role-name EC2-APP-Role \
+            --role-name EC2-CodeDeploy-Role \
             --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
         ```
 
-    - **AWSCodeDeployRole**
+    - **AWSCodeDeployFullAccess** (necesario para que el agente reporte el estado del despliegue)
 
         ```bash
         aws iam attach-role-policy \
-            --role-name EC2-APP-Role \
-            --policy-arn arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+            --role-name EC2-CodeDeploy-Role \
+            --policy-arn arn:aws:iam::aws:policy/AWSCodeDeployFullAccess
         ```
 
 4. Verificar políticas asociadas
 
     ```bash
     aws iam list-attached-role-policies \
-        --role-name EC2-APP-Role
+        --role-name EC2-CodeDeploy-Role
     ```
 
-### [Regresar](./../README.md#configuracion-de-iam)
+### [Regresar](./../README.md#guía-de-configuración)

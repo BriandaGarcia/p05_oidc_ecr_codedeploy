@@ -27,8 +27,8 @@ En este paso se harán los siguientes pasos:
 
     KEY_PAIR_NAME="mi-keypair"
 
-    IAM_ROLE_NAME="EC3-CodeDeploy-Role"
-    INSTANCE_PROFILE_NAME="EC3-CodeDeploy-Role"
+    IAM_ROLE_NAME="EC2-CodeDeploy-Role"
+    INSTANCE_PROFILE_NAME="EC2-CodeDeploy-Role"
 
     INSTANCE_NAME="MiEC2Ubuntu24"
     ```
@@ -241,9 +241,9 @@ En este paso se harán los siguientes pasos:
     | Red | Subred pública |
     | IP pública | Sí |
     | Security Group | SSH + puerto 3000 |
-    | IAM Role | EC3-CodeDeploy-Role |
+    | IAM Role | EC2-CodeDeploy-Role |
     | Docker | Instalado |
     | CodeDeploy Agent | Instalado |
     | AWS CLI | Instalado |
 
-### [Regresar](./../README.md#configuracion-de-iam)
+### [Regresar](./../README.md#guía-de-configuración)
