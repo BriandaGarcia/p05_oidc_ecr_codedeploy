@@ -9,6 +9,7 @@ cd /opt/mi-app
 
 # Autentica Docker con ECR usando el rol de la instancia (sin credenciales hardcodeadas)
 AWS_REGION="${AWS_REGION:-us-east-1}"
+ECR_REGISTRY="157611948522.dkr.ecr.us-east-1.amazonaws.com"
 #ECR_REGISTRY=$(aws ssm get-parameter \
 #  --name "/mi-app/ECR_REGISTRY" \
 #  --region "$AWS_REGION" \
@@ -18,7 +19,7 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 
 aws ecr get-login-password --region "$AWS_REGION" | \
   docker login --username AWS --password-stdin \
-  157611948522.dkr.ecr.us-east-1.amazonaws.com
+  "$ECR_REGISTRY"
 
 # Descarga las nuevas imágenes (backend + frontend)
 docker compose -f docker-compose.yml pull
