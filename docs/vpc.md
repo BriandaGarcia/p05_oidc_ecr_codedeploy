@@ -204,7 +204,7 @@ SECURITY_GROUP_NAME="gh-security-group"
     ```bash
     aws ec2 create-security-group \
         --group-name $SECURITY_GROUP_NAME \
-        --description "Security group para SSH y aplicación" \
+        --description "Security group para SSH y aplicacion" \
         --vpc-id $VPC_ID
     ```
 
