@@ -18,7 +18,7 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 
 aws ecr get-login-password --region "$AWS_REGION" | \
   docker login --username AWS --password-stdin \
-  "$ECR_REGISTRY"
+  157611948522.dkr.ecr.us-east-1.amazonaws.com
 
 # Descarga las nuevas imágenes (backend + frontend)
 docker compose -f docker-compose.yml pull
