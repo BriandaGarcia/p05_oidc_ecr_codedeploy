@@ -9,7 +9,12 @@ cd /opt/mi-app
 
 # Autentica Docker con ECR usando el rol de la instancia (sin credenciales hardcodeadas)
 AWS_REGION="${AWS_REGION:-us-east-1}"
-ECR_REGISTRY="${ECR_REGISTRY:?La variable ECR_REGISTRY no está definida}"
+ECR_REGISTRY=$(aws ssm get-parameter \
+  --name "/mi-app/ECR_REGISTRY" \
+  --region "$AWS_REGION" \
+  --query "Parameter.Value" \
+  --output text)
+export ECR_REGISTRY
 
 aws ecr get-login-password --region "$AWS_REGION" | \
   docker login --username AWS --password-stdin \
