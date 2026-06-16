@@ -1,7 +1,7 @@
 services:
   backend:
     container_name: backend
-    image: ${ECR_REGISTRY}/calculadora/backend:${APP_VERSION:-latest}
+    image: ${ECR_REGISTRY:-157611948522.dkr.ecr.us-east-1.amazonaws.com}/calculadora/backend:${APP_VERSION:-latest}
     expose:
       - "8000"
     networks:
@@ -17,7 +17,7 @@ services:
 
   frontend:
     container_name: frontend
-    image: ${ECR_REGISTRY}/calculadora/frontend:${APP_VERSION:-latest}
+    image: ${ECR_REGISTRY:-157611948522.dkr.ecr.us-east-1.amazonaws.com}/calculadora/frontend:${APP_VERSION:-latest}
     ports:
       - "3000:8080"
     depends_on:
