@@ -3,7 +3,7 @@ name: Build images and deploy to AWS CodeDeploy (On-Premise)
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   workflow_dispatch:
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
         run: |
           REGISTRY="${{ vars.ECR_REGISTRY || steps.login-ecr.outputs.registry }}"
           REPO_NAME="${{ vars.ECR_REPO_NAME || 'taller-devops-monorepo' }}"
-          
+
           if [ -n "${{ vars.ECR_URI }}" ]; then
             ECR_URI="${{ vars.ECR_URI }}"
           else
@@ -152,11 +152,11 @@ jobs:
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name "$CODEDEPLOY_APP" \
             --deployment-group-name "$CODEDEPLOY_GROUP" \
-            --s3-location "bucket=${S3_BUCKET},key=releases/${github.sha}.zip,bundleType=zip" \
+            --s3-location "bucket=${S3_BUCKET},key=releases/${{ github.sha }}.zip,bundleType=zip" \
             --description "Despliegue On-Premise ${{ github.ref_name }} (commit ${{ github.sha }})" \
             --query "deploymentId" \
             --output text)
-          
+
           echo "DEPLOYMENT_ID=${DEPLOYMENT_ID}" >> $GITHUB_ENV
           echo "Despliegue creado con ID: ${DEPLOYMENT_ID}"
 
