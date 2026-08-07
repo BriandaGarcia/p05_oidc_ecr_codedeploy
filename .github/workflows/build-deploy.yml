@@ -140,7 +140,7 @@ jobs:
         run: |
           aws deploy push \
             --application-name "$CODEDEPLOY_APP" \
-            --s3-location "s3://${S3_BUCKET}/releases/${github.sha}.zip" \
+            --s3-location "s3://${S3_BUCKET}/releases/${{ github.sha }}.zip" \
             --source .
 
       - name: Crear despliegue en CodeDeploy (On-Premise)
