@@ -6,13 +6,20 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 ECR_REPO_NAME="taller-devops-monorepo"
 ACCOUNT_ID="157611948522"
 ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
-IMAGE_TAG="${IMAGE_TAG:-latest}"
+
+if [ -f "/opt/mi-app/.app-version" ]; then
+    IMAGE_TAG_FILE=$(cat /opt/mi-app/.app-version | tr -d '\n\r')
+    IMAGE_TAG="${IMAGE_TAG:-$IMAGE_TAG_FILE}"
+else
+    IMAGE_TAG="${IMAGE_TAG:-latest}"
+fi
 
 echo "🚀 Iniciando despliegue desde ECR..."
 echo "📦 URI: ${ECR_URI}"
 echo "🏷️  Tag: ${IMAGE_TAG}"
 
 cd /opt/mi-app
+
 
 # 🔐 Verificar credenciales AWS
 echo "🔐 Verificando credenciales AWS..."

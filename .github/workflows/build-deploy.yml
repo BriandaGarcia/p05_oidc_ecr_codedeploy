@@ -1,0 +1,176 @@
+name: Build images and deploy to AWS CodeDeploy (On-Premise)
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar credenciales AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Autenticar Docker con ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        id: login-ecr
+
+      - name: Preparar URI de ECR e Tag
+        id: prep
+        run: |
+          REGISTRY="${{ vars.ECR_REGISTRY || steps.login-ecr.outputs.registry }}"
+          REPO_NAME="${{ vars.ECR_REPO_NAME || 'taller-devops-monorepo' }}"
+          
+          if [ -n "${{ vars.ECR_URI }}" ]; then
+            ECR_URI="${{ vars.ECR_URI }}"
+          else
+            ECR_URI="${REGISTRY}/${REPO_NAME}"
+          fi
+
+          IMAGE_TAG="${{ github.sha }}"
+
+          echo "ecr_uri=${ECR_URI}" >> $GITHUB_OUTPUT
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Build y push de la imagen Backend
+        env:
+          ECR_URI: ${{ steps.prep.outputs.ecr_uri }}
+          BACKEND_ECR_REGISTRY: ${{ vars.BACKEND_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ steps.prep.outputs.image_tag }}
+        run: |
+          if [ -n "$BACKEND_ECR_REGISTRY" ]; then
+            docker build \
+              -t $BACKEND_ECR_REGISTRY:$IMAGE_TAG \
+              -t $BACKEND_ECR_REGISTRY:latest \
+              ./backend
+            docker push $BACKEND_ECR_REGISTRY:$IMAGE_TAG
+            docker push $BACKEND_ECR_REGISTRY:latest
+          else
+            docker build \
+              -t $ECR_URI:backend-$IMAGE_TAG \
+              -t $ECR_URI:backend-latest \
+              ./backend
+            docker push $ECR_URI:backend-$IMAGE_TAG
+            docker push $ECR_URI:backend-latest
+          fi
+
+      - name: Build y push de la imagen Frontend
+        env:
+          ECR_URI: ${{ steps.prep.outputs.ecr_uri }}
+          FRONTEND_ECR_REGISTRY: ${{ vars.FRONTEND_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ steps.prep.outputs.image_tag }}
+        run: |
+          if [ -n "$FRONTEND_ECR_REGISTRY" ]; then
+            docker build \
+              -t $FRONTEND_ECR_REGISTRY:$IMAGE_TAG \
+              -t $FRONTEND_ECR_REGISTRY:latest \
+              ./frontend
+            docker push $FRONTEND_ECR_REGISTRY:$IMAGE_TAG
+            docker push $FRONTEND_ECR_REGISTRY:latest
+          else
+            docker build \
+              -t $ECR_URI:frontend-$IMAGE_TAG \
+              -t $ECR_URI:frontend-latest \
+              ./frontend
+            docker push $ECR_URI:frontend-$IMAGE_TAG
+            docker push $ECR_URI:frontend-latest
+          fi
+
+      - name: Escribir summary del job (Build & Push)
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          IMAGE_TAG: ${{ steps.prep.outputs.image_tag }}
+          ECR_URI: ${{ steps.prep.outputs.ecr_uri }}
+        run: |
+          echo "## 🚀 Resumen de Build & Push" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job**: ${GITHUB_JOB}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${JOB_STATUS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${GITHUB_SHA}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ECR URI**: \`${ECR_URI}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image tag**: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+
+  deploy-onpremise:
+    name: Deploy to On-Premise / Local Instance via CodeDeploy
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar credenciales AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Escribir la versión en el artefacto
+        run: |
+          echo "${{ github.sha }}" > .app-version
+
+      - name: Verificar estructura del artefacto
+        run: |
+          echo "--- Raíz ---"
+          ls -la
+          echo "--- Scripts ---"
+          ls -la scripts/
+
+      - name: Empaquetar y subir artefacto a S3 para CodeDeploy
+        env:
+          CODEDEPLOY_APP: ${{ secrets.CODEDEPLOY_APP || vars.CODEDEPLOY_APP || 'mi-app' }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET || vars.S3_BUCKET }}
+        run: |
+          aws deploy push \
+            --application-name "$CODEDEPLOY_APP" \
+            --s3-location "s3://${S3_BUCKET}/releases/${github.sha}.zip" \
+            --source .
+
+      - name: Crear despliegue en CodeDeploy (On-Premise)
+        env:
+          CODEDEPLOY_APP: ${{ secrets.CODEDEPLOY_APP || vars.CODEDEPLOY_APP || 'mi-app' }}
+          CODEDEPLOY_GROUP: ${{ secrets.CODEDEPLOY_GROUP || vars.CODEDEPLOY_GROUP || 'produccion' }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET || vars.S3_BUCKET }}
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name "$CODEDEPLOY_APP" \
+            --deployment-group-name "$CODEDEPLOY_GROUP" \
+            --s3-location "bucket=${S3_BUCKET},key=releases/${github.sha}.zip,bundleType=zip" \
+            --description "Despliegue On-Premise ${{ github.ref_name }} (commit ${{ github.sha }})" \
+            --query "deploymentId" \
+            --output text)
+          
+          echo "DEPLOYMENT_ID=${DEPLOYMENT_ID}" >> $GITHUB_ENV
+          echo "Despliegue creado con ID: ${DEPLOYMENT_ID}"
+
+      - name: Escribir summary del job (Despliegue On-Premise)
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          CODEDEPLOY_APP: ${{ secrets.CODEDEPLOY_APP || vars.CODEDEPLOY_APP || 'mi-app' }}
+          CODEDEPLOY_GROUP: ${{ secrets.CODEDEPLOY_GROUP || vars.CODEDEPLOY_GROUP || 'produccion' }}
+        run: |
+          echo "## 📦 Resumen de Despliegue On-Premise" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job**: ${GITHUB_JOB}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${JOB_STATUS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Aplicación CodeDeploy**: \`${CODEDEPLOY_APP}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Grupo de Despliegue**: \`${CODEDEPLOY_GROUP}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment ID**: \`${DEPLOYMENT_ID:-N/A}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${GITHUB_SHA}\`" >> $GITHUB_STEP_SUMMARY
