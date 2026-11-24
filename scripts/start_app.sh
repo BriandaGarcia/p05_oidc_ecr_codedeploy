@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Configuración
-AWS_REGION="${AWS_REGION:-us-east-1}"
+AWS_REGION="${AWS_REGION:-us-east-2}"
 ECR_REPO_NAME="taller-devops-monorepo"
-ACCOUNT_ID="157611948522"
+ACCOUNT_ID="447862604602"
 ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
 
 if [ -f "/opt/mi-app/.app-version" ]; then
