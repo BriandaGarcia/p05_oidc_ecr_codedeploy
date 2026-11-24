@@ -153,4 +153,4 @@ Se activa cuando creas un tag con formato `v1.0.0`, `v2.3.1`, etc. Toma las imá
 
 7. **Eliminación de recursos**
 
-    * [Guía para eliminar todos los recursos creados](./docs/cleanup.md)
+    * [Guía para eliminar todos los recursos creados](./docs/cleanup.md)# Prueba de despliegue automatico mar 24 nov 2026 15:22:08 CST
